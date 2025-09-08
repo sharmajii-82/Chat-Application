@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 
 export const io = new Server(server, {
-  cors: { origin: "http://localhost:5173" }
+  cors: { origin: "http://localhost:5173" },
 });
 
 export const userSocketMap = {}; // { userId: socketId }
@@ -71,7 +71,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     if (userId) delete userSocketMap[userId];
-    io.emit("getOnlineUser", Object.keys(userSocketMap)); 
+    io.emit("getOnlineUser", Object.keys(userSocketMap));
   });
 });
 
@@ -84,5 +84,11 @@ app.use("/api/messages", messageRouter);
 
 await connectDB();
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log("Server is running on PORT: " + PORT));
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, () => console.log("Server is running on PORT: " + PORT));
+}
+
+// export server for vercel
+
+export default server;
