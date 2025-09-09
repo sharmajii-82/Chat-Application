@@ -10,9 +10,8 @@ const App = () => {
   const { authUser } = useContext(AuthContext);
 
   return (
-    <div className="bg-[url('/bgImage.svg')] bg-contain bg-no-repeat min-h-screen">
+    <div className="bg-[url('./bgImage.svg')] bg-contain">
       <Toaster />
-
       <Routes>
         {/* Authenticated routes */}
         <Route
@@ -30,9 +29,6 @@ const App = () => {
           path="/login"
           element={!authUser ? <LoginPage /> : <Navigate to="/" />}
         />
-
-        {/* Catch-all route */}
-        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
   );
