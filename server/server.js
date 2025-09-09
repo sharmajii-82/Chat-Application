@@ -6,12 +6,14 @@ import { connectDB } from "./lib/db.js";
 import UserRouter from "./routes/userRoutes.js";
 import messageRouter from "./routes/messageRoutes.js";
 import { Server } from "socket.io";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 const server = http.createServer(app);
 
 export const io = new Server(server, {
-  cors: { origin: "http://localhost:5173" },
+  cors: { origin: process.env.NODE_ENV === "production" ? "*" : "http://localhost:5173" },
 });
 
 export const userSocketMap = {}; // { userId: socketId }
@@ -76,19 +78,29 @@ io.on("connection", (socket) => {
 });
 
 app.use(express.json({ limit: "4mb" }));
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: process.env.NODE_ENV === "production" ? "*" : "http://localhost:5173" }));
 
 app.get("/api/status", (req, res) => res.send("Server is live"));
 app.use("/api/auth", UserRouter);
 app.use("/api/messages", messageRouter);
 
+// ------------------- SERVE FRONTEND IN PRODUCTION -------------------
+if (process.env.NODE_ENV === "production") {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  app.use(express.static(path.join(__dirname, "../client/dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+  });
+}
+
+// ------------------- CONNECT DB & START SERVER -------------------
 await connectDB();
 
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 5000;
-  server.listen(PORT, () => console.log("Server is running on PORT: " + PORT));
+  server.listen(PORT, () => console.log("Server running on PORT:", PORT));
 }
 
-// export server for vercel
-
+// export server for Vercel
 export default server;
